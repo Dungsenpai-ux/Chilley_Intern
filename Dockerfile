@@ -13,5 +13,7 @@ RUN go mod tidy
 # Biên dịch ứng dụng
 RUN go build -o main .
 
+
+
 # Chạy ứng dụng
 CMD ["./main"]
