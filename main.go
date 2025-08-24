@@ -2,27 +2,30 @@ package main
 
 import (
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
+
 type Task struct {
 	ID          int    `json:"id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Completed   bool   `json:"completed"`
 }
+
 var tasks []Task
-var mu sync.Mutex 
+var mu sync.Mutex
 var nextID = 1
 
 func main() {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"}, 
+		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -35,10 +38,14 @@ func main() {
 	r.PUT("/tasks/:id", updateTask)
 	r.DELETE("/tasks/:id", deleteTask)
 
-	r.Run(":8080") 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // Default port if not set
+	}
+	r.Run(":" + port)
 }
 
-// addTask 
+// addTask
 func addTask(c *gin.Context) {
 	var newTask Task
 	if err := c.ShouldBindJSON(&newTask); err != nil {
@@ -59,7 +66,7 @@ func addTask(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"id": newTask.ID})
 }
 
-// getTasks 
+// getTasks
 func getTasks(c *gin.Context) {
 	mu.Lock()
 	taskList := make([]Task, len(tasks))
@@ -68,7 +75,7 @@ func getTasks(c *gin.Context) {
 	c.JSON(http.StatusOK, taskList)
 }
 
-// updateTask 
+// updateTask
 func updateTask(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -97,7 +104,7 @@ func updateTask(c *gin.Context) {
 	c.JSON(http.StatusNotFound, gin.H{"error": "Task not found"})
 }
 
-// deleteTask 
+// deleteTask
 func deleteTask(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
